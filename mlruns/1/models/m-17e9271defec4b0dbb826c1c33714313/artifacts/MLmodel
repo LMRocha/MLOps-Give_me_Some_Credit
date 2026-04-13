@@ -1,0 +1,23 @@
+artifact_path: file:///D:/Lauro/Cursos/InfNet/D6_operalizacao_mlops/pd_v4/mlruns/1/models/m-17e9271defec4b0dbb826c1c33714313/artifacts
+flavors:
+  python_function:
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.sklearn
+    model_path: model.pkl
+    predict_fn: predict
+    python_version: 3.11.15
+  sklearn:
+    code: null
+    pickled_model: model.pkl
+    serialization_format: cloudpickle
+    sklearn_version: 1.8.0
+    skops_trusted_types: null
+mlflow_version: 3.11.1
+model_id: m-17e9271defec4b0dbb826c1c33714313
+model_size_bytes: 1135
+model_uuid: m-17e9271defec4b0dbb826c1c33714313
+prompts: null
+run_id: e54e780fea35480d855f68e91e6a01b7
+utc_time_created: '2026-04-13 03:18:45.313621'

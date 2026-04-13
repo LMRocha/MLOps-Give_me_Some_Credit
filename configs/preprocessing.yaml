@@ -1,0 +1,54 @@
+# preprocessing.yaml — Configuração de Pré-processamento e Feature Engineering
+#
+# Princípio MLOps: separação entre política (YAML) e mecanismo (código).
+# Para ajustar qualquer transformação, edite apenas este arquivo.
+# O código em src/preprocessing.py não precisa mudar.
+#
+# Pipeline: data/processed/give-me-some-credit.parquet
+#        → data/features/give-me-some-credit_features.parquet
+
+# ── Saída ──────────────────────────────────────────────────────────────────────
+preprocessing:
+  output_dir: "data/features"
+  output_filename: "give-me-some-credit_features.parquet"
+  compression: "snappy"
+
+# ── 1. Imputação de Valores Ausentes ──────────────────────────────────────────
+# MonthlyIncome tem ~19.82% de NaN. Imputamos com a mediana simples.
+# NumberOfDependents tem ~2.62% de NaN. Imputamos com a mediana simples.
+imputation:
+  - column: "MonthlyIncome"
+    strategy: "median"       # median | mean | constant
+  - column: "NumberOfDependents"
+    strategy: "median"       # median | mean | constant
+
+
+# ── 2. StandardScaler Transformation ──────────────────────────────────────
+# Padroniza features numéricas para média=0 e desvio=1.
+# Essencial para algoritmos sensíveis à escala (SVM, KNN, PCA, etc.).
+# Aplicado APÓS split treino/teste para evitar data leakage.
+standard_scaler:
+  columns:
+    - "RevolvingUtilizationOfUnsecuredLines"
+    - "age"
+    - "NumberOfTime30-59DaysPastDueNotWorse"
+    - "DebtRatio"
+    - "MonthlyIncome"
+    - "NumberOfOpenCreditLinesAndLoans"
+    - "NumberOfTimes90DaysLate"
+    - "NumberRealEstateLoansOrLines"
+    - "NumberOfTime60-89DaysPastDueNotWorse"
+    - "NumberOfDependents"
+
+# ── 3. Dataset Balance ────────────────────────────────────────────────────────
+# Trata desbalanceamento extremo da classe target (93.32% vs 6.68%).
+# SMOTE oversampling da classe minoritária + undersampling da majoritária.
+# Aplicado APÓS split treino/teste para evitar data leakage.
+# dataset_balance:
+#   target: "SeriousDlqin2yrs"
+#   strategy: "smote"                    # smote | random_undersample | combined
+#   sampling_strategy: "auto"            # auto | minority | majority | not_minority
+#   k_neighbors: 5                       # para SMOTE
+#   random_state: 42
+dataset_balance:
+  strategy: null

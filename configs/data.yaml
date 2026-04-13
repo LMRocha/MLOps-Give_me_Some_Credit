@@ -1,0 +1,31 @@
+# data.yaml — Dataset-specific configuration
+# Controls Kaggle source, file discovery, ingestion behavior, and schema
+
+kaggle:
+  dataset: "brycecf/give-me-some-credit-dataset"
+  file_pattern: "*.csv"
+  expected_files: ['cs-training.csv']
+  expected_count: null
+
+ingest:
+  output_format: "parquet"
+  compression: "snappy"
+  chunk_size_rows: 50000
+  convert_dtypes: true         # Attempt automatic dtype inference (pyarrow)
+  validate_schema: true        # Fail loudly on missing required columns
+
+schema:
+  # Required columns — pipeline fails loudly if any are missing post-ingest
+  # Column names from the brycecf/give-me-some-credit-dataset
+  required_columns:
+    - "SeriousDlqin2yrs"
+    - "RevolvingUtilizationOfUnsecuredLines"
+    - "age"
+    - "NumberOfTime30-59DaysPastDueNotWorse"
+    - "DebtRatio"
+    - "MonthlyIncome"
+    - "NumberOfOpenCreditLinesAndLoans"
+    - "NumberOfTimes90DaysLate"
+    - "NumberRealEstateLoansOrLines"
+    - "NumberOfTime60-89DaysPastDueNotWorse"
+    - "NumberOfDependents"

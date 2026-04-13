@@ -1,0 +1,28 @@
+# pipeline.yaml — Pipeline-level configuration
+# Controls execution behavior, output paths, and logging
+
+pipeline:
+  name: "give-me-some-credit-pipeline"
+  version: "1.0.0"
+  description: "Pipeline de ingestão dos dados de perfis de crédito para o projeto Give Me Some Credit do Kaggle"
+
+paths:
+  raw_data_dir: "data/raw"
+  processed_data_dir: "data/processed"
+  output_filename: "give_me_some_credit.parquet"
+  features_data_dir: "data/features"
+  features_filename: "give_me_some_credit.parquet"
+
+
+execution:
+  skip_download_if_exists: true
+  skip_ingest_if_exists: true
+  force_redownload: false
+  force_ingest: false
+
+logging:
+  level: "INFO"                    # DEBUG | INFO | WARNING | ERROR
+  format: "%(asctime)s [%(levelname)s] %(name)s - %(message)s"
+  datefmt: "%Y-%m-%d %H:%M:%S"
+  log_to_file: false
+  log_file: "pipeline.log"

@@ -1,0 +1,199 @@
+# quality.yaml — Configuração de Qualidade de Dados via Great Expectations
+#
+# Este arquivo define TODAS as regras de qualidade. O código (src/quality.py)
+# é genérico: ele lê este YAML e executa as verificações dinamicamente.
+#
+# Princípio MLOps: separar política (YAML) de mecanismo (código).
+# Para alterar um critério basta editar este arquivo — sem tocar no código.
+#
+# Tipos de expectation usam snake_case (padrão GE).
+# kwargs seguem a assinatura exata de cada classe GE.
+quality:
+  suite_name: give-me-some-credit_suite
+  # fail_pipeline_on_error: true → lança RuntimeError se qualquer check falhar
+  # Use true em produção, false durante exploração / desenvolvimento
+  fail_pipeline_on_error: false
+  output_dir: outputs/quality        # relatório JSON salvo aqui
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Expectations de TABELA (sem coluna específica)
+# Validam propriedades globais do dataset
+# ─────────────────────────────────────────────────────────────────────────────
+table_expectations:
+
+  # O dataset Give me Some Credit deve ter entre 50k e 150k registros (baseado no histórico do cs-training.csv)
+  - type: expect_table_row_count_to_be_between
+    kwargs:
+      min_value: 50
+      max_value: 150000
+
+  # Garante que o schema não mudou — nenhuma coluna foi adicionada ou removida
+  - type: expect_table_columns_to_match_set
+    kwargs:
+      column_set:
+        - ""
+        - SeriousDlqin2yrs
+        - RevolvingUtilizationOfUnsecuredLines
+        - age
+        - NumberOfTime30-59DaysPastDueNotWorse
+        - DebtRatio
+        - MonthlyIncome
+        - NumberOfOpenCreditLinesAndLoans
+        - NumberOfTimes90DaysLate
+        - NumberRealEstateLoansOrLines
+        - NumberOfTime60-89DaysPastDueNotWorse
+        - NumberOfDependents
+      exact_match: true
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Expectations de COLUNA
+# Cada chave é o nome de uma coluna; o valor é uma lista de checks.
+# Ordem importa: checks mais baratos (null) devem vir antes de range checks.
+# ─────────────────────────────────────────────────────────────────────────────
+column_expectations:
+
+  # ── Variável alvo (binária) ────────────────────────────────────────────────
+  SeriousDlqin2yrs:
+    - type: expect_column_values_to_not_be_null
+    - type: expect_column_values_to_be_in_set
+      kwargs:
+        value_set: [0, 1]
+    - type: expect_column_mean_to_be_between
+      kwargs:
+        min_value: 0.06    # ~7% positive class
+        max_value: 0.08
+
+  # ── Utilização de crédito rotativo ─────────────────────────────────────────
+  RevolvingUtilizationOfUnsecuredLines:
+    - type: expect_column_values_to_not_be_null
+    - type: expect_column_values_to_be_between
+      kwargs:
+        min_value: 0.0
+        max_value: 60000.0    # Allow for extreme outliers (max observed 50708)
+        mostly: 0.99         # 99% of values should be reasonable
+    - type: expect_column_mean_to_be_between
+      kwargs:
+        min_value: 5.0     # Média histórica ~6.05
+        max_value: 8.0
+
+  # ── Idade ─────────────────────────────────────────────────────────────────
+  age:
+    - type: expect_column_values_to_not_be_null
+    - type: expect_column_values_to_be_between
+      kwargs:
+        min_value: 18      # Idade mínima legal para crédito
+        max_value: 110     # Máximo observado 109 + margem
+        mostly: 0.99      # Permite alguns outliers (ex.: idade 0)
+    - type: expect_column_mean_to_be_between
+      kwargs:
+        min_value: 50      # Média histórica ~52.3
+        max_value: 55
+
+  # ── Atrasos 30-59 dias ────────────────────────────────────────────────────
+  NumberOfTime30-59DaysPastDueNotWorse:
+    - type: expect_column_values_to_not_be_null
+    - type: expect_column_values_to_be_between
+      kwargs:
+        min_value: 0
+        max_value: 100      # Allow special codes (98 = unknown/not applicable)
+    - type: expect_column_mean_to_be_between
+      kwargs:
+        min_value: 0.3     # Média histórica ~0.42
+        max_value: 0.6
+
+  # ── Razão de dívida ───────────────────────────────────────────────────────
+  DebtRatio:
+    - type: expect_column_values_to_not_be_null
+    - type: expect_column_values_to_be_between
+      kwargs:
+        min_value: 0.0
+        max_value: 400000.0  # Allow for extreme outliers (max observed ~329664)
+        mostly: 0.99        # 99% of values should be reasonable
+    - type: expect_column_median_to_be_between
+      kwargs:
+        min_value: 0.3     # Mediana histórica ~0.37
+        max_value: 0.5
+
+  # ── Renda mensal (com nulos esperados) ────────────────────────────────────
+  MonthlyIncome:
+    # ~20% dos registros têm renda ausente — isso é esperado no dataset
+    - type: expect_column_values_to_not_be_null
+      kwargs:
+        mostly: 0.75      # Toleramos até 25% de nulos (margem sobre o 19.8% histórico)
+    - type: expect_column_values_to_be_between
+      kwargs:
+        min_value: 0.0
+        max_value: 100000.0  # Cap conservador para renda mensal
+        mostly: 0.99      # 99% dos valores não-nulos devem estar neste range
+        nullable: true    # Permite valores nulos
+    - type: expect_column_median_to_be_between
+      kwargs:
+        min_value: 5000   # Mediana histórica ~5400
+        max_value: 6000
+        nullable: true    # Permite valores nulos na mediana
+
+  # ── Linhas de crédito abertas ──────────────────────────────────────────────
+  NumberOfOpenCreditLinesAndLoans:
+    - type: expect_column_values_to_not_be_null
+    - type: expect_column_values_to_be_between
+      kwargs:
+        min_value: 0
+        max_value: 60      # Máximo observado 58 + margem
+    - type: expect_column_mean_to_be_between
+      kwargs:
+        min_value: 8.0    # Média histórica ~8.45
+        max_value: 9.0
+
+  # ── Atrasos 90+ dias ──────────────────────────────────────────────────────
+  NumberOfTimes90DaysLate:
+    - type: expect_column_values_to_not_be_null
+    - type: expect_column_values_to_be_between
+      kwargs:
+        min_value: 0
+        max_value: 100      # Allow special codes (98 = unknown/not applicable)
+    - type: expect_column_mean_to_be_between
+      kwargs:
+        min_value: 0.2    # Média histórica ~0.27
+        max_value: 0.4
+
+  # ── Empréstimos imobiliários ──────────────────────────────────────────────
+  NumberRealEstateLoansOrLines:
+    - type: expect_column_values_to_not_be_null
+    - type: expect_column_values_to_be_between
+      kwargs:
+        min_value: 0
+        max_value: 60      # Allow higher values (max observed 54)
+    - type: expect_column_mean_to_be_between
+      kwargs:
+        min_value: 0.9    # Média histórica ~1.02
+        max_value: 1.2
+
+  # ── Atrasos 60-89 dias ────────────────────────────────────────────────────
+  NumberOfTime60-89DaysPastDueNotWorse:
+    - type: expect_column_values_to_not_be_null
+    - type: expect_column_values_to_be_between
+      kwargs:
+        min_value: 0
+        max_value: 100      # Allow special codes (98 = unknown/not applicable)
+    - type: expect_column_mean_to_be_between
+      kwargs:
+        min_value: 0.2    # Média histórica ~0.24
+        max_value: 0.3
+
+  # ── Dependentes (com nulos esperados) ─────────────────────────────────────
+  NumberOfDependents:
+    # ~2.6% dos registros têm dependentes ausentes — isso é esperado
+    - type: expect_column_values_to_not_be_null
+      kwargs:
+        mostly: 0.95      # Toleramos até 5% de nulos (margem sobre o 2.6% histórico)
+    - type: expect_column_values_to_be_between
+      kwargs:
+        min_value: 0
+        max_value: 10      # Valores >10 são raros
+        mostly: 0.99      # 99% dos valores não-nulos devem estar neste range
+        nullable: true    # Permite valores nulos
+    - type: expect_column_mean_to_be_between
+      kwargs:
+        min_value: 0.7    # Média histórica ~0.76
+        max_value: 0.9
+        nullable: true    # Permite valores nulos na média
