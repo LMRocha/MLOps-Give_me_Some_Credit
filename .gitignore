@@ -1,1 +1,3 @@
 secrets.env
+/mlruns
+/src/__pycache__

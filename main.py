@@ -8,6 +8,10 @@ from src.quality import run_quality_checks
 from src.preprocessing import run_preprocessing
 from kaggle.api.kaggle_api_extended import KaggleApi
 from src.modeling_baseline import run_baseline_model
+from src.modeling import run_modeling   
+from src.tuning import run_optuna 
+from src.train_final import train_final_model
+
 
 
 def download_dataset(dataset: str, output_dir: str):
@@ -60,6 +64,9 @@ def ingest_data():
 
 if __name__ == "__main__":
     # ingest_data()
-    run_quality_checks()
-    run_preprocessing()
-    run_baseline_model()
+    # run_quality_checks()
+    # run_preprocessing()
+    # run_baseline_model()
+    # run_modeling()
+    run_optuna()
+    train_final_model()

@@ -4,7 +4,6 @@ import pandas as pd
 import mlflow
 import mlflow.sklearn
 from sklearn.metrics import f1_score, precision_score, recall_score
-
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import f1_score, accuracy_score, precision_score, recall_score
 
