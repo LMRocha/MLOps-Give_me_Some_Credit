@@ -1,3 +1,6 @@
+import json
+import joblib
+import os
 import pandas as pd
 import mlflow
 from sklearn.ensemble import GradientBoostingClassifier
@@ -33,7 +36,9 @@ def train_final_model():
     print(f"Recall: {recall}")
     print(f"Accuracy: {acc}")
 
-    mlflow.end_run()
+    if mlflow.active_run():
+        mlflow.end_run()
+    mlflow.set_experiment("final_model_gradient_boosting")
     with mlflow.start_run(run_name="final_model_gradient_boosting"):
         mlflow.log_param("model", "gradient_boosting")
         mlflow.log_params({
@@ -42,10 +47,17 @@ def train_final_model():
             "max_depth": 2,
             "threshold": 0.1
         })
-        mlflow.end_run()
-
         mlflow.log_metric("f1", f1)
         mlflow.log_metric("precision", precision)
         mlflow.log_metric("recall", recall)
         mlflow.log_metric("accuracy", acc)
         mlflow.sklearn.log_model(model, "model")
+
+        os.makedirs("models", exist_ok=True)
+        joblib.dump(model, "models/final_model.pkl")
+        config = {
+        "threshold": 0.1
+        }
+
+        with open("models/model_config.json", "w") as f:
+            json.dump(config, f)

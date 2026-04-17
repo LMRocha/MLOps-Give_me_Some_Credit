@@ -25,6 +25,12 @@ def run_modeling():
     
     models_config = config["models"]
     all_results = []
+    
+    mlflow.set_experiment(config["modeling"]["experiment_name"])
+
+    if mlflow.active_run():
+        mlflow.end_run()
+
     for model_name, model_cfg in models_config.items():
 
         if not model_cfg.get("enabled", False):
@@ -55,8 +61,6 @@ def run_modeling():
         "recall": recall,
         "accuracy": acc
         })
-
-        mlflow.set_experiment(config["modeling"]["experiment_name"])
 
         with mlflow.start_run(run_name=model_name):
 

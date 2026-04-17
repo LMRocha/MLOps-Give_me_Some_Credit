@@ -38,6 +38,9 @@ def run_optuna():
     print("Best F1:", study.best_value)
 
     # log mlflow
+    if mlflow.active_run():
+        mlflow.end_run()
+    mlflow.set_experiment("optuna_gradient_boosting")
     with mlflow.start_run(run_name="optuna_gradient_boosting"):
         mlflow.log_params(study.best_params)
         mlflow.log_metric("f1", study.best_value)

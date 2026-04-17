@@ -15,10 +15,12 @@ def run_baseline_model():
     y_train = pd.read_parquet("data/features/y_train.parquet").values.ravel()
     y_test = pd.read_parquet("data/features/y_test.parquet").values.ravel()
 
+    if mlflow.active_run():
+        mlflow.end_run()
+
     # MLflow setup
     mlflow.set_experiment("baseline-logistic-regression")
-
-    with mlflow.start_run():
+    with mlflow.start_run(run_name="baseline-logistic-regression"):
 
         # Modelo
         model = LogisticRegression(max_iter=1000)

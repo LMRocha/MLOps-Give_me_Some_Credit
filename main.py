@@ -63,10 +63,10 @@ def ingest_data():
 
 
 if __name__ == "__main__":
-    # ingest_data()
-    # run_quality_checks()
-    # run_preprocessing()
-    # run_baseline_model()
-    # run_modeling()
+    ingest_data()
+    run_quality_checks()
+    run_preprocessing()
+    run_baseline_model()
+    run_modeling()
     run_optuna()
     train_final_model()
