@@ -1,3 +1,5 @@
 secrets.env
 /mlruns
 /src/__pycache__
+*.db
+*.zip
